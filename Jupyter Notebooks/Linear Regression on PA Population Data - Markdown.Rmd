@@ -1,0 +1,96 @@
+---
+title: "Linear Regression on PA Population Data - Markdown"
+author: "Alexander Vaillant"
+date: "9/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Environment Setup
+### Import Necessary Libraries
+
+```{r}
+#Load all necessary packages
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(modelr)
+library(ggplot2)
+```
+
+## Data Gathering
+### Load Dataset into Dataframe using read_excel()
+
+```{r}
+# Import the raw dataset using readxl::read_excel
+url <- "C:/Users/tedda/Desktop/Data Science Portfolio/Machine Learning/Supervised Learning/Regression/Linear Regression on PA Population Data/Raw Datasets/nst-est2019-alldata.xlsx"
+raw_data <- read_excel(url)
+```
+
+## Data Preparation
+
+```{r}
+# Cleanse the data for Pennsylvania 2010 - 2019 using dplyr::select & dplyr::filter
+data <- raw_data %>% select(NAME, "2010":"2019")
+data <- filter(data, NAME == "Pennsylvania")
+
+# Remove the NAME column using dplyr::select
+data2 <- data %>% select("2010":"2019")
+
+# Create a dataframe from data2 using data.frame
+# t(data2) is used to transpose the data from horizontal to vertical
+# 2010:2019 creates a column of Years
+df2<-data.frame(x=2010:2019, y=t(data2))
+rownames(df2) <- NULL #This resets the rownames
+
+# Export cleansed dataset
+write.csv(df2, "C:/Users/tedda/Desktop/Data Science Portfolio/Machine Learning/Supervised Learning/Regression/Linear Regression on PA Population Data/Cleansed Datasets/Prepped Dataset.csv")
+```
+
+## Model Building
+
+```{r}
+# Create your linear regression model using modelr::lm()
+df2_mod<- lm(y ~ x, data = df2)
+coef(df2_mod)
+```
+
+## Save and Load Model
+```{r}
+# Save and Load Model
+model_url <- "C:/Users/tedda/Desktop/Data Science Portfolio/Machine Learning/Supervised Learning/Regression/Linear Regression on PA Population Data/Exported Models/PAPopulationLRModel.rds"
+saveRDS(df2_mod, model_url)
+df2_mod <- readRDS(model_url)
+```
+
+## Model Evaluation & Prediction
+
+```{r}
+# Create a grid to add your predictions for plotting using add_predictions()
+grid <- df2 %>% data_grid(x)
+grid <- grid %>% add_predictions(df2_mod)
+
+# Plot the grid using ggplot2::ggplot()
+ggplot(df2, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "blue", size = 1)
+
+# Add the residuals to your dataframe using add_residuals()
+df2 <- df2 %>% add_residuals(df2_mod)
+
+# Plot the residuals to view the frequency using geom_freqpoly()
+ggplot(df2, aes(resid)) +
+  geom_freqpoly()
+
+# Create a summary of your data using summary()
+summary(df2)
+
+# Predict the population for the next five years using predict()
+five_year_pred <- data.frame (x=2020:2025)
+rownames(five_year_pred) <- c(2020:2025)
+predict(df2_mod,newdata = five_year_pred)
+```
