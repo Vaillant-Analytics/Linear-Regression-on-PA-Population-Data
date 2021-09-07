@@ -1,8 +1,8 @@
 ---
-title: "Linear Regression on PA Population Data - Markdown"
+title: "Linear Regression on PA Population Data"
 author: "Alexander Vaillant"
-date: "9/6/2021"
-output: html_document
+date: "9/7/2021"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
